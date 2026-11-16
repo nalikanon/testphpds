@@ -1,6 +1,6 @@
 <?php
 try {
-    $conn = new PDO('sqlsrv:Server=localhost;Database=master;TrustServerCertificate=true');
+    $conn = new PDO('sqlsrv:Server=DS_A7B485CA\\MSSQLSERVER03;Database=master;TrustServerCertificate=true');
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     echo "Connected to MSSQL master successfully.\n";
@@ -10,7 +10,7 @@ try {
     echo "Database SalesDB verified/created.\n";
 
     // Connect to SalesDB
-    $db = new PDO('sqlsrv:Server=localhost;Database=SalesDB;TrustServerCertificate=true');
+    $db = new PDO('sqlsrv:Server=DS_A7B485CA\\MSSQLSERVER03;Database=SalesDB;TrustServerCertificate=true');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     echo "Connected to SalesDB successfully.\n";
 
@@ -162,4 +162,3 @@ try {
 } catch (Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
 }
-

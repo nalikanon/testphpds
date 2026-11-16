@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'sqlsrv'),
 
     /*
     |--------------------------------------------------------------------------
@@ -102,7 +102,7 @@ return [
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
-            'host' => env('DB_HOST', 'localhost'),
+            'host' => env('DB_HOST', 'DS_A7B485CA\\MSSQLSERVER03'),
             'port' => env('DB_PORT', null),
             'database' => env('DB_DATABASE', 'SalesDB'),
             'username' => env('DB_USERNAME', ''),
