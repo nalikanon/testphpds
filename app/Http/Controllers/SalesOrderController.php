@@ -12,21 +12,34 @@ use Illuminate\Support\Facades\DB;
 
 class SalesOrderController extends Controller
 {
+    /**
+     * Display a listing of sales orders.
+     * Permission: User sees only their own orders; Admin sees all orders.
+     */
     public function index(Request $request)
     {
+        $user = Auth::user();
         $search = $request->input('search');
         $status = $request->input('status');
         $customerId = $request->input('customer_id');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        $query = SalesOrder::with(['customer', 'creator'])
-            ->when($search, function ($q, $search) {
-                $q->where('order_no', 'like', "%{$search}%")
-                  ->orWhereHas('customer', function ($cq) use ($search) {
-                      $cq->where('customer_name', 'like', "%{$search}%")
-                         ->orWhere('customer_code', 'like', "%{$search}%");
-                  });
+        $query = SalesOrder::with(['customer', 'creator']);
+
+        // Permission: User เห็นเฉพาะของตัวเอง, Admin เห็นทั้งหมด
+        if (!$user->isAdmin()) {
+            $query->where('created_by', $user->user_id);
+        }
+
+        $query->when($search, function ($q, $search) {
+                $q->where(function ($sq) use ($search) {
+                    $sq->where('order_no', 'like', "%{$search}%")
+                       ->orWhereHas('customer', function ($cq) use ($search) {
+                           $cq->where('customer_name', 'like', "%{$search}%")
+                              ->orWhere('customer_code', 'like', "%{$search}%");
+                       });
+                });
             })
             ->when($status, function ($q, $status) {
                 $q->where('status', $status);
@@ -46,22 +59,15 @@ class SalesOrderController extends Controller
         $orders = $query->paginate(10)->withQueryString();
         $customers = Customer::orderBy('customer_name')->get();
 
-        return view('orders.index', compact('orders', 'customers', 'search', 'status', 'customerId', 'dateFrom', 'dateTo'));
+        return view('orders.index', compact('orders', 'customers', 'search', 'status', 'customerId', 'dateFrom', 'dateTo', 'user'));
     }
 
     public function create()
     {
-        $prefix = 'SO-' . date('Ym') . '-';
-        $latest = SalesOrder::where('order_no', 'like', "{$prefix}%")
-            ->orderBy('order_no', 'desc')
-            ->first();
-
-        if ($latest) {
-            $num = (int) substr($latest->order_no, strlen($prefix)) + 1;
-        } else {
-            $num = 1;
-        }
-        $orderNo = $prefix . str_pad($num, 4, '0', STR_PAD_LEFT);
+        // Generate running Order No: SO-001, SO-002 or SO-YYYYMM-XXXX
+        $lastOrder = SalesOrder::orderBy('order_id', 'desc')->first();
+        $nextNum = $lastOrder ? ($lastOrder->order_id + 1) : 1;
+        $orderNo = 'SO-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
 
         $customers = Customer::orderBy('customer_code')->get();
         $items = Item::orderBy('item_code')->get();
@@ -154,7 +160,7 @@ class SalesOrderController extends Controller
 
             DB::commit();
 
-            return redirect()->route('orders.show', $order)->with('success', 'สร้างใบสั่งขายเลขที่ ' . $order->order_no . ' เรียบร้อยแล้ว');
+            return redirect()->route('orders.show', $order)->with('success', 'สร้างใบสั่งขายเลขที่ ' . $order->order_no . ' สำเร็จแล้ว');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'เกิดข้อผิดพลาดในการบันทึก: ' . $e->getMessage());
@@ -163,14 +169,26 @@ class SalesOrderController extends Controller
 
     public function show(SalesOrder $order)
     {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+            abort(403, 'คุณไม่มีสิทธิ์เข้าถึงใบสั่งขายนี้');
+        }
+
         $order->load(['customer', 'creator', 'lines.item']);
         return view('orders.show', compact('order'));
     }
 
     public function edit(SalesOrder $order)
     {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+            abort(403, 'คุณไม่มีสิทธิ์แก้ไขใบสั่งขายนี้');
+        }
+
+        // ข้อกำหนด: ถ้า Confirmed / Cancelled แล้ว ไม่สามารถแก้ไข และลบได้
         if (!$order->isDraft()) {
-            return redirect()->route('orders.show', $order)->with('error', 'สามารถแก้ไขได้เฉพาะใบสั่งขายที่มีสถานะ "แบบร่าง (Draft)" เท่านั้น');
+            return redirect()->route('orders.show', $order)
+                ->with('error', 'ถ้า Confirmed / Cancel แล้ว ไม่สามารถแก้ไข และลบได้ (แก้ไขได้เฉพาะสถานะ Draft เท่านั้น)');
         }
 
         $order->load(['customer', 'lines.item']);
@@ -182,8 +200,15 @@ class SalesOrderController extends Controller
 
     public function update(Request $request, SalesOrder $order)
     {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+            abort(403, 'คุณไม่มีสิทธิ์แก้ไขใบสั่งขายนี้');
+        }
+
+        // ข้อกำหนด: ถ้า Confirmed / Cancelled แล้ว ไม่สามารถแก้ไข และลบได้
         if (!$order->isDraft()) {
-            return redirect()->route('orders.show', $order)->with('error', 'สามารถแก้ไขได้เฉพาะใบสั่งขายที่มีสถานะ "แบบร่าง (Draft)" เท่านั้น');
+            return redirect()->route('orders.show', $order)
+                ->with('error', 'ถ้า Confirmed / Cancel แล้ว ไม่สามารถแก้ไข และลบได้ (แก้ไขได้เฉพาะสถานะ Draft เท่านั้น)');
         }
 
         $request->validate([
@@ -270,8 +295,13 @@ class SalesOrderController extends Controller
 
     public function confirm(SalesOrder $order)
     {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+            abort(403, 'คุณไม่มีสิทธิ์ยืนยันใบสั่งขายนี้');
+        }
+
         if (!$order->isDraft()) {
-            return back()->with('error', 'สามารถยืนยันได้เฉพาะใบสั่งขายสถานะ "แบบร่าง" เท่านั้น');
+            return back()->with('error', 'สามารถยืนยันได้เฉพาะใบสั่งขายสถานะ "แบบร่าง (Draft)" เท่านั้น');
         }
 
         $order->status = 'confirmed';
@@ -282,6 +312,11 @@ class SalesOrderController extends Controller
 
     public function cancel(SalesOrder $order)
     {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+            abort(403, 'คุณไม่มีสิทธิ์ยกเลิกใบสั่งขายนี้');
+        }
+
         if ($order->isCancelled()) {
             return back()->with('error', 'ใบสั่งขายนี้ถูกยกเลิกแล้ว');
         }
@@ -292,10 +327,20 @@ class SalesOrderController extends Controller
         return back()->with('success', 'ยกเลิกใบสั่งขายเลขที่ ' . $order->order_no . ' สำเร็จแล้ว');
     }
 
+    /**
+     * Delete sales order.
+     * ข้อกำหนด: Delete : status = draft
+     * ถ้า Confirmed / Cancle แล้ว ไม่สามารถแก้ไข และลบได้
+     */
     public function destroy(SalesOrder $order)
     {
-        if (!Auth::user()->isAdmin() && !$order->isDraft()) {
-            return back()->with('error', 'เฉพาะ Admin หรือใบสั่งขายสถานะแบบร่างเท่านั้นที่สามารถลบได้');
+        $user = Auth::user();
+        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+            abort(403, 'คุณไม่มีสิทธิ์ลบใบสั่งขายนี้');
+        }
+
+        if (!$order->isDraft()) {
+            return back()->with('error', 'ถ้า Confirmed / Cancel แล้ว ไม่สามารถแก้ไข และลบได้ (ลบได้เฉพาะสถานะ Draft เท่านั้น)');
         }
 
         $orderNo = $order->order_no;
@@ -307,8 +352,12 @@ class SalesOrderController extends Controller
 
     public function print(SalesOrder $order)
     {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+            abort(403, 'คุณไม่มีสิทธิ์พิมพ์ใบสั่งขายนี้');
+        }
+
         $order->load(['customer', 'creator', 'lines.item']);
         return view('orders.print', compact('order'));
     }
 }
-
