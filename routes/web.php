@@ -20,6 +20,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/db-viewer', [DashboardController::class, 'dbViewer'])->name('db.viewer');
 
     // Profile & Password
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');

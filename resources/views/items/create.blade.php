@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'เพิ่มสินค้าใหม่')
+@section('title', 'เพิ่มสินค้าใหม่ - Item Master')
 
 @section('content')
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
         <div class="card shadow-sm">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 fw-bold"><i class="bi bi-box-seam text-primary me-2"></i> เพิ่มสินค้าใหม่ (New Item)</h5>
+                <h5 class="card-title mb-0 fw-bold"><i class="bi bi-box-seam text-primary me-2"></i> เพิ่มสินค้าใหม่ (Item Master - Admin Only)</h5>
                 <a href="{{ route('items.index') }}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-arrow-left me-1"></i> ย้อนกลับ
                 </a>
@@ -15,10 +15,20 @@
             <div class="card-body p-4">
                 <form action="{{ route('items.store') }}" method="POST">
                     @csrf
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">รหัสสินค้า (Item Code) <span class="text-danger">*</span></label>
-                        <input type="text" name="item_code" class="form-control @error('item_code') is-invalid @enderror" value="{{ old('item_code', $suggestedCode) }}" required>
-                        <div class="form-text">เช่น ITEM-001, ITEM-002</div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">รหัสสินค้า (Item Code) <span class="text-danger">*</span></label>
+                            <input type="text" name="item_code" class="form-control @error('item_code') is-invalid @enderror" value="{{ old('item_code', $suggestedCode) }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">หมวดหมู่สินค้า (Category)</label>
+                            <input type="text" name="category" list="categoryList" class="form-control" value="{{ old('category', 'IT & Hardware') }}" placeholder="เช่น อิเล็กทรอนิกส์, อุปกรณ์สำนักงาน">
+                            <datalist id="categoryList">
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat }}"></option>
+                                @endforeach
+                            </datalist>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -29,7 +39,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">หน่วยนับ (Unit)</label>
-                            <input type="text" name="unit" class="form-control" value="{{ old('unit', 'ชิ้น') }}" placeholder="เช่น ชิ้น, เครื่อง, ชุด, ตัว">
+                            <input type="text" name="unit" class="form-control" value="{{ old('unit', 'pc') }}" placeholder="เช่น pc, kg, box, ชิ้น, ตัว">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">ราคาต่อหน่วย (Unit Price) <span class="text-danger">*</span></label>
@@ -37,12 +47,13 @@
                                 <span class="input-group-text">฿</span>
                                 <input type="number" step="0.01" min="0" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror" value="{{ old('unit_price', '0.00') }}" required>
                             </div>
+                            <div class="form-text">Validation: price >= 0</div>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">รายละเอียดสินค้า (Description)</label>
-                        <textarea name="description" class="form-control" rows="3" placeholder="ระบุรายละเอียด สเปกสินค้า...">{{ old('description') }}</textarea>
+                        <textarea name="description" class="form-control" rows="3" placeholder="ระบุรายละเอียดสินค้า...">{{ old('description') }}</textarea>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
@@ -57,4 +68,3 @@
     </div>
 </div>
 @endsection
-

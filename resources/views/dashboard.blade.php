@@ -12,9 +12,11 @@
         <a href="{{ route('orders.create') }}" class="btn btn-primary">
             <i class="bi bi-plus-circle me-1"></i> เปิดใบสั่งขายใหม่
         </a>
+        @if(Auth::user()->isAdmin())
         <a href="{{ route('customers.create') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-person-plus me-1"></i> เพิ่มลูกค้า
+            <i class="bi bi-person-plus me-1"></i> เพิ่มลูกค้า (Admin Only)
         </a>
+        @endif
     </div>
 </div>
 

@@ -159,8 +159,8 @@ function createLineRow() {
         <td class="text-center fw-bold line-no">${rowIndex + 1}</td>
         <td>
             <select name="items[${rowIndex}][item_id]" class="form-select form-select-sm item-select" required onchange="handleItemChange(this, ${rowIndex})">
-                <option value="">-- เลือกสินค้า --</option>
-                ${itemsData.map(it => `<option value="${it.item_id}" data-price="${it.unit_price}" data-unit="${it.unit || ''}">${it.item_code} - ${it.item_name}</option>`).join('')}
+                <option value="">-- เลือกสินค้า (Item Code + Name + Price) --</option>
+                ${itemsData.map(it => `<option value="${it.item_id}" data-price="${it.unit_price}" data-unit="${it.unit || ''}">${it.item_code} - ${it.item_name} (฿${parseFloat(it.unit_price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})</option>`).join('')}
             </select>
         </td>
         <td class="text-center"><span class="item-unit small text-muted">-</span></td>

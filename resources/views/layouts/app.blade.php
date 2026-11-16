@@ -54,7 +54,7 @@
     @yield('styles')
 </head>
 <body>
-    <!-- Header & Navigation Bar (ตรงตามแบบ: [Logo] Sales Order System   [Masters] ... User [Logout]) -->
+    <!-- Header & Navigation Bar (5.2 Navigation Menu: User vs Admin) -->
     <nav class="navbar navbar-expand-lg main-navbar sticky-top">
         <div class="container-fluid px-3">
             <!-- [Logo] Sales Order System -->
@@ -70,49 +70,71 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navMain">
-                <!-- Left Nav: Dashboard, Sales Orders, [Masters] -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
+                    <!-- Dashboard -->
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                             <i class="bi bi-speedometer2 me-1"></i> Dashboard
                         </a>
                     </li>
 
+                    <!-- Sales Orders (ทั้ง User & Admin) -->
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}" href="{{ route('orders.index') }}">
                             <i class="bi bi-receipt me-1"></i> Sales Orders
                         </a>
                     </li>
 
-                    <!-- [Masters] Dropdown Menu -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {{ request()->routeIs('customers.*') || request()->routeIs('items.*') || request()->routeIs('users.*') ? 'active fw-bold' : '' }}" 
-                           href="#" id="mastersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-database me-1"></i> [Masters]
-                        </a>
-                        <ul class="dropdown-menu shadow-sm" aria-labelledby="mastersDropdown">
-                            <li><h6 class="dropdown-header text-uppercase small text-muted">Master Data</h6></li>
-                            <li>
-                                <a class="dropdown-item d-flex align-items-center py-2 {{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}">
-                                    <i class="bi bi-people me-2 text-primary"></i> Customers (ลูกค้า)
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item d-flex align-items-center py-2 {{ request()->routeIs('items.*') ? 'active' : '' }}" href="{{ route('items.index') }}">
-                                    <i class="bi bi-box-seam me-2 text-success"></i> Items (สินค้า)
-                                </a>
-                            </li>
-                            @if(Auth::check() && Auth::user()->isAdmin())
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header text-uppercase small text-danger">Administration</h6></li>
-                            <li>
-                                <a class="dropdown-item d-flex align-items-center py-2 {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                                    <i class="bi bi-person-gear me-2 text-danger"></i> Users Management (จัดการผู้ใช้)
-                                </a>
-                            </li>
-                            @endif
-                        </ul>
-                    </li>
+                    @if(Auth::check() && Auth::user()->isAdmin())
+                        <!-- Admin Menu: Masters (Role Full: Customers, Items Master, Users) -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ request()->routeIs('customers.*') || request()->routeIs('items.*') || request()->routeIs('users.*') ? 'active fw-bold' : '' }}" 
+                               href="#" id="mastersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-database me-1"></i> [Masters - Role Full]
+                            </a>
+                            <ul class="dropdown-menu shadow-sm" aria-labelledby="mastersDropdown">
+                                <li><h6 class="dropdown-header text-uppercase small text-muted">Master Data (Full Control)</h6></li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center justify-content-between py-2 {{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}">
+                                        <span><i class="bi bi-people me-2 text-primary"></i> Customers</span>
+                                        <span class="badge bg-success small">Full</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center justify-content-between py-2 {{ request()->routeIs('items.*') ? 'active' : '' }}" href="{{ route('items.index') }}">
+                                        <span><i class="bi bi-box-seam me-2 text-success"></i> Items (Item Master)</span>
+                                        <span class="badge bg-success small">Full</span>
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header text-uppercase small text-danger">Administration</h6></li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center justify-content-between py-2 {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                                        <span><i class="bi bi-person-gear me-2 text-danger"></i> Users Management</span>
+                                        <span class="badge bg-danger small">Admin</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center justify-content-between py-2 {{ request()->routeIs('db.viewer') ? 'active' : '' }}" href="{{ route('db.viewer') }}">
+                                        <span><i class="bi bi-database-check me-2 text-info"></i> DB Live Inspector</span>
+                                        <span class="badge bg-info text-dark small">Live DB</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    @else
+                        <!-- User Menu: Customers (Read Only) & Items (Read Only) -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}">
+                                <i class="bi bi-people me-1"></i> Customers <span class="badge bg-secondary" style="font-size: 0.65rem;">Read Only</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('items.*') ? 'active' : '' }}" href="{{ route('items.index') }}">
+                                <i class="bi bi-box-seam me-1"></i> Items <span class="badge bg-secondary" style="font-size: 0.65rem;">Read Only</span>
+                            </a>
+                        </li>
+                    @endif
                 </ul>
 
                 <!-- Right Nav: User Display & [Logout] Button -->
@@ -125,7 +147,7 @@
                         </span>
                     </div>
 
-                    <a href="{{ route('profile') }}" class="btn btn-sm btn-outline-secondary" title="Change Password / Profile">
+                    <a href="{{ route('profile') }}" class="btn btn-sm btn-outline-secondary" title="เปลี่ยนรหัสผ่าน">
                         <i class="bi bi-key"></i>
                     </a>
 
@@ -185,4 +207,3 @@
     @yield('scripts')
 </body>
 </html>
-

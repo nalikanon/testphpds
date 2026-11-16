@@ -98,6 +98,8 @@ class SalesOrderController extends Controller
             'order_date.required' => 'กรุณาระบุวันที่สั่งซื้อ',
             'items.required' => 'กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ',
             'items.min' => 'กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ',
+            'items.*.quantity.min' => 'จำนวนสินค้าต้องมากกว่า 0 (Quantity > 0)',
+            'items.*.unit_price.min' => 'ราคาต่อหน่วยต้องไม่ต่ำกว่า 0 (Price >= 0)',
         ]);
 
         DB::beginTransaction();

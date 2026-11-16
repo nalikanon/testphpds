@@ -6,11 +6,20 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h3 class="fw-bold mb-0 text-dark">ข้อมูลลูกค้า (Customers)</h3>
-        <p class="text-muted small mb-0">Master Data &bull; จัดการรายชื่อลูกค้าและบริษัทคู่ค้า</p>
+        <p class="text-muted small mb-0">
+            Master Data &bull; 
+            @if(Auth::user()->isAdmin())
+                <span class="badge bg-success">Role Full (Admin: เพิ่ม-แก้ไข-ลบ ข้อมูลลูกค้า)</span>
+            @else
+                <span class="badge bg-secondary">Read Only (User: ดูข้อมูลเท่านั้น)</span>
+            @endif
+        </p>
     </div>
+    @if(Auth::user()->isAdmin())
     <a href="{{ route('customers.create') }}" class="btn btn-primary">
         <i class="bi bi-person-plus-fill me-1"></i> เพิ่มลูกค้าใหม่
     </a>
+    @endif
 </div>
 
 <div class="card shadow-sm mb-4">
@@ -65,18 +74,22 @@
                             {{ $c->created_at ? $c->created_at->format('d/m/Y') : '-' }}
                         </td>
                         <td class="text-end pe-3">
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ route('customers.edit', $c) }}" class="btn btn-outline-primary" title="แก้ไข">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <form action="{{ route('customers.destroy', $c) }}" method="POST" class="d-inline" onsubmit="return confirm('คุณต้องการลบลูกค้ารายนี้ใช่หรือไม่?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger" title="ลบ" {{ $c->sales_orders_count > 0 ? 'disabled' : '' }}>
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
+                            @if(Auth::user()->isAdmin())
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ route('customers.edit', $c) }}" class="btn btn-outline-primary" title="แก้ไข">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{{ route('customers.destroy', $c) }}" method="POST" class="d-inline" onsubmit="return confirm('คุณต้องการลบลูกค้ารายนี้ใช่หรือไม่?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger" title="ลบ" {{ $c->sales_orders_count > 0 ? 'disabled' : '' }}>
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            @else
+                                <span class="badge bg-light text-muted border">Read Only</span>
+                            @endif
                         </td>
                     </tr>
                     @empty
@@ -97,4 +110,3 @@
     @endif
 </div>
 @endsection
-

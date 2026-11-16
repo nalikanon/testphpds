@@ -4,41 +4,64 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ItemController extends Controller
 {
+    /**
+     * Display items list.
+     * User: Read Only | Admin: Role Full
+     */
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $category = $request->input('category');
 
-        $items = Item::query()
+        $query = Item::query()
             ->when($search, function ($query, $search) {
-                $query->where('item_code', 'like', "%{$search}%")
+                $query->where(function ($q) use ($search) {
+                    $q->where('item_code', 'like', "%{$search}%")
                       ->orWhere('item_name', 'like', "%{$search}%")
                       ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($category, function ($query, $category) {
+                $query->where('category', $category);
             })
             ->withCount('salesLines')
-            ->orderBy('item_code')
-            ->paginate(10)
-            ->withQueryString();
+            ->orderBy('item_code');
 
-        return view('items.index', compact('items', 'search'));
+        $items = $query->paginate(10)->withQueryString();
+        $categories = Item::select('category')->whereNotNull('category')->distinct()->pluck('category');
+
+        return view('items.index', compact('items', 'search', 'category', 'categories'));
     }
 
     public function create()
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถเพิ่มสินค้าได้ (Item Master: Admin Only)');
+        }
+
         $lastItem = Item::orderBy('item_id', 'desc')->first();
         $nextNum = $lastItem ? ($lastItem->item_id + 1) : 1;
-        $suggestedCode = 'ITEM-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+        $suggestedCode = 'PROD-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
 
-        return view('items.create', compact('suggestedCode'));
+        $categories = Item::select('category')->whereNotNull('category')->distinct()->pluck('category');
+
+        return view('items.create', compact('suggestedCode', 'categories'));
     }
 
     public function store(Request $request)
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถเพิ่มสินค้าได้ (Item Master: Admin Only)');
+        }
+
         $validated = $request->validate([
             'item_code' => ['required', 'string', 'max:20', 'unique:Items,item_code'],
             'item_name' => ['required', 'string', 'max:100'],
+            'category' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
             'unit' => ['nullable', 'string', 'max:20'],
             'unit_price' => ['required', 'numeric', 'min:0'],
@@ -48,7 +71,7 @@ class ItemController extends Controller
             'item_name.required' => 'กรุณาระบุชื่อสินค้า',
             'unit_price.required' => 'กรุณาระบุราคาต่อหน่วย',
             'unit_price.numeric' => 'ราคาต่อหน่วยต้องเป็นตัวเลข',
-            'unit_price.min' => 'ราคาต่อหน่วยต้องไม่ต่ำกว่า 0',
+            'unit_price.min' => 'ราคาต่อหน่วยต้องมากกว่าหรือเท่ากับ 0 (Price >= 0)',
         ]);
 
         Item::create($validated);
@@ -58,14 +81,25 @@ class ItemController extends Controller
 
     public function edit(Item $item)
     {
-        return view('items.edit', compact('item'));
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถแก้ไขสินค้าได้ (Item Master: Admin Only)');
+        }
+
+        $categories = Item::select('category')->whereNotNull('category')->distinct()->pluck('category');
+
+        return view('items.edit', compact('item', 'categories'));
     }
 
     public function update(Request $request, Item $item)
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถแก้ไขสินค้าได้ (Item Master: Admin Only)');
+        }
+
         $validated = $request->validate([
             'item_code' => ['required', 'string', 'max:20', 'unique:Items,item_code,' . $item->item_id . ',item_id'],
             'item_name' => ['required', 'string', 'max:100'],
+            'category' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
             'unit' => ['nullable', 'string', 'max:20'],
             'unit_price' => ['required', 'numeric', 'min:0'],
@@ -74,7 +108,7 @@ class ItemController extends Controller
             'item_code.unique' => 'รหัสสินค้านี้มีอยู่ในระบบแล้ว',
             'item_name.required' => 'กรุณาระบุชื่อสินค้า',
             'unit_price.required' => 'กรุณาระบุราคาต่อหน่วย',
-            'unit_price.numeric' => 'ราคาต่อหน่วยต้องเป็นตัวเลข',
+            'unit_price.min' => 'ราคาต่อหน่วยต้องมากกว่าหรือเท่ากับ 0 (Price >= 0)',
         ]);
 
         $item->update($validated);
@@ -84,6 +118,10 @@ class ItemController extends Controller
 
     public function destroy(Item $item)
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถลบสินค้าได้ (Item Master: Admin Only)');
+        }
+
         if ($item->salesLines()->count() > 0) {
             return back()->with('error', 'ไม่สามารถลบสินค้านี้ได้ เนื่องจากมีประวัติอยู่ในรายการใบสั่งขาย');
         }
@@ -94,7 +132,7 @@ class ItemController extends Controller
     }
 
     /**
-     * API to return item info for AJAX dynamic dropdown
+     * API to return item info for AJAX dynamic dropdown & Auto-fill
      */
     public function getItemJson(Item $item)
     {
@@ -102,10 +140,10 @@ class ItemController extends Controller
             'item_id' => $item->item_id,
             'item_code' => $item->item_code,
             'item_name' => $item->item_name,
+            'category' => $item->category ?? '',
             'unit' => $item->unit ?? '',
             'unit_price' => (float)$item->unit_price,
             'description' => $item->description ?? '',
         ]);
     }
 }
-

@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerController extends Controller
 {
+    /**
+     * Display customer list.
+     * User: Read Only | Admin: Role Full
+     */
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -26,7 +31,10 @@ class CustomerController extends Controller
 
     public function create()
     {
-        // Suggest next customer code
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถเพิ่มข้อมูลลูกค้าได้ (User: Read Only)');
+        }
+
         $lastCust = Customer::orderBy('customer_id', 'desc')->first();
         $nextNum = $lastCust ? ($lastCust->customer_id + 1) : 1;
         $suggestedCode = 'CUST-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
@@ -36,6 +44,10 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถเพิ่มข้อมูลลูกค้าได้ (User: Read Only)');
+        }
+
         $validated = $request->validate([
             'customer_code' => ['required', 'string', 'max:20', 'unique:Customers,customer_code'],
             'customer_name' => ['required', 'string', 'max:100'],
@@ -52,11 +64,19 @@ class CustomerController extends Controller
 
     public function edit(Customer $customer)
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถแก้ไขข้อมูลลูกค้าได้ (User: Read Only)');
+        }
+
         return view('customers.edit', compact('customer'));
     }
 
     public function update(Request $request, Customer $customer)
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถแก้ไขข้อมูลลูกค้าได้ (User: Read Only)');
+        }
+
         $validated = $request->validate([
             'customer_code' => ['required', 'string', 'max:20', 'unique:Customers,customer_code,' . $customer->customer_id . ',customer_id'],
             'customer_name' => ['required', 'string', 'max:100'],
@@ -73,6 +93,10 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถลบข้อมูลลูกค้าได้ (User: Read Only)');
+        }
+
         if ($customer->salesOrders()->count() > 0) {
             return back()->with('error', 'ไม่สามารถลบลูกค้ารายนี้ได้ เนื่องจากมีใบสั่งขายที่อ้างอิงอยู่');
         }
@@ -82,4 +106,3 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('success', 'ลบข้อมูลลูกค้าเรียบร้อยแล้ว');
     }
 }
-
