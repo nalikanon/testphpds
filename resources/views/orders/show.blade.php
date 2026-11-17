@@ -33,7 +33,7 @@
             </form>
         @endif
 
-        @if(!$order->isCancelled())
+        @if($order->isDraft())
             <form action="{{ route('orders.cancel', $order) }}" method="POST" class="d-inline" onsubmit="return confirm('คุณต้องการยกเลิกใบสั่งขายนี้ใช่หรือไม่?');">
                 @csrf
                 <button type="submit" class="btn btn-outline-danger">
@@ -120,7 +120,6 @@
                         <th style="width: 90px;">หน่วย</th>
                         <th class="text-end" style="width: 110px;">จำนวน</th>
                         <th class="text-end" style="width: 130px;">ราคา/หน่วย (฿)</th>
-                        <th class="text-end" style="width: 110px;">ส่วนลด</th>
                         <th class="text-end" style="width: 140px;">รวมเงิน (฿)</th>
                         <th style="min-width: 140px;">หมายเหตุ</th>
                     </tr>
@@ -139,20 +138,12 @@
                         <td class="text-center">{{ $line->item->unit ?? '-' }}</td>
                         <td class="text-end">{{ number_format($line->quantity, 3) }}</td>
                         <td class="text-end">฿{{ number_format($line->unit_price, 2) }}</td>
-                        <td class="text-end">
-                            @if($line->discount_percent > 0)
-                                {{ number_format($line->discount_percent, 2) }}%
-                                <div class="text-danger small">(-฿{{ number_format($line->discount_amount, 2) }})</div>
-                            @else
-                                -
-                            @endif
-                        </td>
                         <td class="text-end fw-bold">฿{{ number_format($line->line_total, 2) }}</td>
                         <td class="text-muted small">{{ $line->remark ?? '-' }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center py-4 text-muted">ไม่มีรายการสินค้า</td>
+                        <td colspan="8" class="text-center py-4 text-muted">ไม่มีรายการสินค้า</td>
                     </tr>
                     @endforelse
                 </tbody>

@@ -77,7 +77,6 @@
                             <th style="width: 90px;">หน่วย</th>
                             <th style="width: 120px;">จำนวน <span class="text-danger">*</span></th>
                             <th style="width: 130px;">ราคา/หน่วย (฿)</th>
-                            <th style="width: 100px;">ส่วนลด (%)</th>
                             <th style="width: 140px;">รวมเงิน (฿)</th>
                             <th style="min-width: 150px;">หมายเหตุ</th>
                             <th style="width: 60px;">ลบ</th>
@@ -165,13 +164,10 @@ function createLineRow() {
         </td>
         <td class="text-center"><span class="item-unit small text-muted">-</span></td>
         <td>
-            <input type="number" step="0.001" min="0.001" name="items[${rowIndex}][quantity]" class="form-control form-control-sm text-end line-qty" value="1.000" required oninput="calculateRow(${rowIndex})">
+            <input type="number" step="1" min="1" name="items[${rowIndex}][quantity]" class="form-control form-control-sm text-end line-qty" value="1" required oninput="calculateRow(${rowIndex})">
         </td>
         <td>
-            <input type="number" step="0.01" min="0" name="items[${rowIndex}][unit_price]" class="form-control form-control-sm text-end line-price" value="0.00" required oninput="calculateRow(${rowIndex})">
-        </td>
-        <td>
-            <input type="number" step="0.01" min="0" max="100" name="items[${rowIndex}][discount_percent]" class="form-control form-control-sm text-end line-disc" value="0.00" oninput="calculateRow(${rowIndex})">
+            <input type="number" step="0.01" min="0" name="items[${rowIndex}][unit_price]" class="form-control form-control-sm text-end line-price" value="0.00" title="แก้ไขราคาได้หลังเลือกสินค้า" inputmode="decimal" required oninput="calculateRow(${rowIndex})">
         </td>
         <td class="text-end fw-bold line-total-disp">฿0.00</td>
         <td>
@@ -212,11 +208,9 @@ function calculateRow(rIdx) {
 
     const qty = parseFloat(tr.querySelector('.line-qty').value) || 0;
     const price = parseFloat(tr.querySelector('.line-price').value) || 0;
-    const discPct = parseFloat(tr.querySelector('.line-disc').value) || 0;
 
     const gross = qty * price;
-    const discAmt = gross * (discPct / 100);
-    const lineTotal = Math.max(0, gross - discAmt);
+    const lineTotal = gross;
 
     tr.querySelector('.line-total-disp').textContent = '฿' + lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     calculateOrderSummary();
@@ -227,11 +221,9 @@ function calculateOrderSummary() {
     document.querySelectorAll('#linesContainer tr').forEach(tr => {
         const qty = parseFloat(tr.querySelector('.line-qty').value) || 0;
         const price = parseFloat(tr.querySelector('.line-price').value) || 0;
-        const discPct = parseFloat(tr.querySelector('.line-disc').value) || 0;
 
         const gross = qty * price;
-        const discAmt = gross * (discPct / 100);
-        subtotal += Math.max(0, gross - discAmt);
+        subtotal += gross;
     });
 
     const orderDiscPct = parseFloat(document.getElementById('discountPercent').value) || 0;

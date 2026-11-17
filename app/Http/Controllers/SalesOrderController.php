@@ -25,12 +25,9 @@ class SalesOrderController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        $query = SalesOrder::with(['customer', 'creator']);
-
-        // Permission: User เห็นเฉพาะของตัวเอง, Admin เห็นทั้งหมด
-        if (!$user->isAdmin()) {
-            $query->where('created_by', $user->user_id);
-        }
+        $query = SalesOrder::query()
+            ->visibleTo($user)
+            ->with(['customer', 'creator']);
 
         $query->when($search, function ($q, $search) {
                 $q->where(function ($sq) use ($search) {
@@ -53,8 +50,8 @@ class SalesOrderController extends Controller
             ->when($dateTo, function ($q, $dateTo) {
                 $q->whereDate('order_date', '<=', $dateTo);
             })
-            ->orderBy('order_date', 'desc')
-            ->orderBy('order_id', 'desc');
+            ->orderBy('created_at', 'asc')
+            ->orderBy('order_id', 'asc');
 
         $orders = $query->paginate(10)->withQueryString();
         $customers = Customer::orderBy('customer_name')->get();
@@ -89,7 +86,6 @@ class SalesOrderController extends Controller
             'items.*.item_id' => ['required', 'exists:Items,item_id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
-            'items.*.discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'items.*.remark' => ['nullable', 'string', 'max:255'],
         ], [
             'order_no.required' => 'กรุณาระบุเลขที่ใบสั่งขาย',
@@ -110,11 +106,9 @@ class SalesOrderController extends Controller
             foreach ($request->items as $index => $row) {
                 $qty = (float) $row['quantity'];
                 $price = (float) $row['unit_price'];
-                $lineDiscPct = (float) ($row['discount_percent'] ?? 0);
 
                 $grossLine = $qty * $price;
-                $lineDiscAmt = round($grossLine * ($lineDiscPct / 100), 2);
-                $lineTotal = round($grossLine - $lineDiscAmt, 2);
+                $lineTotal = round($grossLine, 2);
 
                 $totalAmount += $lineTotal;
 
@@ -122,8 +116,8 @@ class SalesOrderController extends Controller
                     'item_id' => $row['item_id'],
                     'quantity' => $qty,
                     'unit_price' => $price,
-                    'discount_percent' => $lineDiscPct,
-                    'discount_amount' => $lineDiscAmt,
+                    'discount_percent' => 0,
+                    'discount_amount' => 0,
                     'line_total' => $lineTotal,
                     'remark' => $row['remark'] ?? '',
                     'line_no' => $index + 1,
@@ -172,7 +166,7 @@ class SalesOrderController extends Controller
     public function show(SalesOrder $order)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+        if (!$user->isAdmin() && !$order->isOwnedBy($user)) {
             abort(403, 'คุณไม่มีสิทธิ์เข้าถึงใบสั่งขายนี้');
         }
 
@@ -183,7 +177,7 @@ class SalesOrderController extends Controller
     public function edit(SalesOrder $order)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+        if (!$user->isAdmin() && !$order->isOwnedBy($user)) {
             abort(403, 'คุณไม่มีสิทธิ์แก้ไขใบสั่งขายนี้');
         }
 
@@ -203,7 +197,7 @@ class SalesOrderController extends Controller
     public function update(Request $request, SalesOrder $order)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+        if (!$user->isAdmin() && !$order->isOwnedBy($user)) {
             abort(403, 'คุณไม่มีสิทธิ์แก้ไขใบสั่งขายนี้');
         }
 
@@ -225,7 +219,6 @@ class SalesOrderController extends Controller
             'items.*.item_id' => ['required', 'exists:Items,item_id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
-            'items.*.discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'items.*.remark' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -237,11 +230,9 @@ class SalesOrderController extends Controller
             foreach ($request->items as $index => $row) {
                 $qty = (float) $row['quantity'];
                 $price = (float) $row['unit_price'];
-                $lineDiscPct = (float) ($row['discount_percent'] ?? 0);
 
                 $grossLine = $qty * $price;
-                $lineDiscAmt = round($grossLine * ($lineDiscPct / 100), 2);
-                $lineTotal = round($grossLine - $lineDiscAmt, 2);
+                $lineTotal = round($grossLine, 2);
 
                 $totalAmount += $lineTotal;
 
@@ -250,8 +241,8 @@ class SalesOrderController extends Controller
                     'item_id' => $row['item_id'],
                     'quantity' => $qty,
                     'unit_price' => $price,
-                    'discount_percent' => $lineDiscPct,
-                    'discount_amount' => $lineDiscAmt,
+                    'discount_percent' => 0,
+                    'discount_amount' => 0,
                     'line_total' => $lineTotal,
                     'remark' => $row['remark'] ?? '',
                     'line_no' => $index + 1,
@@ -298,7 +289,7 @@ class SalesOrderController extends Controller
     public function confirm(SalesOrder $order)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+        if (!$user->isAdmin() && !$order->isOwnedBy($user)) {
             abort(403, 'คุณไม่มีสิทธิ์ยืนยันใบสั่งขายนี้');
         }
 
@@ -315,12 +306,12 @@ class SalesOrderController extends Controller
     public function cancel(SalesOrder $order)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+        if (!$user->isAdmin() && !$order->isOwnedBy($user)) {
             abort(403, 'คุณไม่มีสิทธิ์ยกเลิกใบสั่งขายนี้');
         }
 
-        if ($order->isCancelled()) {
-            return back()->with('error', 'ใบสั่งขายนี้ถูกยกเลิกแล้ว');
+        if (!$order->isDraft()) {
+            return back()->with('error', 'ยกเลิกได้เฉพาะใบสั่งขายสถานะ Draft เท่านั้น');
         }
 
         $order->status = 'cancelled';
@@ -337,7 +328,7 @@ class SalesOrderController extends Controller
     public function destroy(SalesOrder $order)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+        if (!$user->isAdmin() && !$order->isOwnedBy($user)) {
             abort(403, 'คุณไม่มีสิทธิ์ลบใบสั่งขายนี้');
         }
 
@@ -355,7 +346,7 @@ class SalesOrderController extends Controller
     public function print(SalesOrder $order)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && $order->created_by !== $user->user_id) {
+        if (!$user->isAdmin() && !$order->isOwnedBy($user)) {
             abort(403, 'คุณไม่มีสิทธิ์พิมพ์ใบสั่งขายนี้');
         }
 

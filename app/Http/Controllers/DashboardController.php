@@ -4,28 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Item;
-use App\Models\SalesOrder;
 use App\Models\SalesLine;
+use App\Models\SalesOrder;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $totalOrders = SalesOrder::count();
+        $user = Auth::user();
+        $ordersQuery = SalesOrder::query()->visibleTo($user);
+
+        $totalOrders = (clone $ordersQuery)->count();
         $totalCustomers = Customer::count();
         $totalItems = Item::count();
-        $totalUsers = User::count();
 
-        $draftOrders = SalesOrder::where('status', 'draft')->count();
-        $confirmedOrders = SalesOrder::where('status', 'confirmed')->count();
-        $cancelledOrders = SalesOrder::where('status', 'cancelled')->count();
+        $draftOrders = (clone $ordersQuery)->where('status', 'draft')->count();
+        $confirmedOrders = (clone $ordersQuery)->where('status', 'confirmed')->count();
+        $cancelledOrders = (clone $ordersQuery)->where('status', 'cancelled')->count();
 
-        $confirmedSalesAmount = SalesOrder::where('status', 'confirmed')->sum('grand_total');
+        $confirmedSalesAmount = (clone $ordersQuery)->where('status', 'confirmed')->sum('grand_total');
 
-        $recentOrders = SalesOrder::with(['customer', 'creator'])
+        $recentOrders = (clone $ordersQuery)->with(['customer', 'creator'])
             ->orderBy('created_at', 'desc')
             ->take(8)
             ->get();
@@ -34,7 +36,6 @@ class DashboardController extends Controller
             'totalOrders',
             'totalCustomers',
             'totalItems',
-            'totalUsers',
             'draftOrders',
             'confirmedOrders',
             'cancelledOrders',
@@ -48,7 +49,7 @@ class DashboardController extends Controller
      */
     public function dbViewer()
     {
-        $serverInfo = DB::select("SELECT @@SERVERNAME as server_name, DB_NAME() as db_name, @@VERSION as version")[0];
+        $serverInfo = DB::select('SELECT @@SERVERNAME as server_name, DB_NAME() as db_name, @@VERSION as version')[0];
 
         $users = User::orderBy('user_id')->get();
         $customers = Customer::orderBy('customer_id')->get();

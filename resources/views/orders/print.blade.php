@@ -125,7 +125,6 @@
                         <th style="width: 70px;">หน่วย</th>
                         <th class="text-end" style="width: 90px;">จำนวน</th>
                         <th class="text-end" style="width: 110px;">ราคา/หน่วย</th>
-                        <th class="text-end" style="width: 90px;">ส่วนลด</th>
                         <th class="text-end" style="width: 130px;">รวมเงิน (฿)</th>
                     </tr>
                 </thead>
@@ -143,9 +142,6 @@
                         <td class="text-center">{{ $line->item->unit ?? '-' }}</td>
                         <td class="text-end">{{ number_format($line->quantity, 3) }}</td>
                         <td class="text-end">{{ number_format($line->unit_price, 2) }}</td>
-                        <td class="text-end">
-                            {{ $line->discount_percent > 0 ? number_format($line->discount_percent, 2).'%' : '-' }}
-                        </td>
                         <td class="text-end fw-bold">{{ number_format($line->line_total, 2) }}</td>
                     </tr>
                     @endforeach

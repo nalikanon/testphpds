@@ -6,7 +6,13 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h3 class="fw-bold mb-0 text-dark">ภาพรวมระบบ (Dashboard)</h3>
-        <p class="text-muted small mb-0">ระบบบริหารจัดการใบสั่งขาย (Sales Order Management System)</p>
+        <p class="text-muted small mb-0">
+            @if(Auth::user()->isAdmin())
+                ระบบบริหารจัดการใบสั่งขาย (Sales Order Management System)
+            @else
+                แสดงข้อมูลใบสั่งขายของคุณเท่านั้น
+            @endif
+        </p>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('orders.create') }}" class="btn btn-primary">

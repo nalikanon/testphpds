@@ -94,21 +94,27 @@
                 <thead class="table-light text-center small">
                     <tr>
                         <th style="width: 50px;">No</th>
-                        <th style="width: 130px;">Order No</th>
+                        <th style="width: 130px;">
+                            <div>Order No</div>
+                            <div class="text-muted fw-normal" style="font-size: 10px;">Confirm order</div>
+                        </th>
                         <th>Customer (ดึงมาจากMaster)</th>
                         <th style="width: 120px;">Date (วันที่สร้างรายการ)</th>
-                        <th style="width: 140px;" class="text-end">
+                        <th style="width: 140px;">
                             <div>Total</div>
-                            <div class="text-muted fw-normal" style="font-size: 11px;">(คำนวณราคาสินค้าทั้งหมด)</div>
+                            <div class="text-muted fw-normal" style="font-size: 11px;">(คำนวณราคาสินค้าทั้งหมดของ order นั้น)</div>
                         </th>
                         <th style="width: 130px;">
                             <div>Status</div>
-                            <div class="text-muted fw-normal" style="font-size: 10px;">(Confirmed/Cancel แก้ไข/ลบไม่ได้)</div>
+                            <div class="text-muted fw-normal" style="font-size: 10px;">(ถ้า Confirmed /Cancel แล้ว ไม่สามารถแก้ไข และลบได้)</div>
                         </th>
-                        <th style="width: 110px;">CreatedBy</th>
+                        <th style="width: 110px;">
+                            <div>CreatedBy</div>
+                            <div class="text-muted fw-normal" style="font-size: 10px;">login</div>
+                        </th>
                         <th style="width: 190px;" class="text-center">
                             <div>Actions</div>
-                            <div class="text-danger fw-normal" style="font-size: 10px;">Delete: status = draft</div>
+                            <div class="text-danger fw-normal" style="font-size: 10px;">Delete : status = draft</div>
                         </th>
                     </tr>
                 </thead>

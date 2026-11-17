@@ -38,6 +38,24 @@ class ExampleTest extends TestCase
             $response = $this->actingAs($user)->get('/orders');
             $response->assertStatus(200);
             $response->assertSee('Sales Order Management (User + Admin)');
+            $response->assertSee('Customer (ดึงมาจากMaster)');
+            $response->assertSee('คำนวณราคาสินค้าทั้งหมดของ order นั้น');
+            $response->assertSee('Delete : status = draft');
         }
+    }
+
+    public function test_user_dashboard_shows_master_data_counts(): void
+    {
+        $user = User::where('username', 'user')->first();
+        if (! $user) {
+            $this->markTestSkipped('No regular user is available in the database.');
+        }
+
+        $response = $this->actingAs($user)->get('/dashboard');
+
+        $response->assertOk();
+        $response->assertSee('แสดงข้อมูลใบสั่งขายของคุณเท่านั้น');
+        $response->assertSee('จำนวนลูกค้าทั้งหมด');
+        $response->assertSee('จำนวนสินค้าทั้งหมด');
     }
 }

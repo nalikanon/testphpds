@@ -77,7 +77,6 @@
                             <th style="width: 90px;">หน่วย</th>
                             <th style="width: 120px;">จำนวน <span class="text-danger">*</span></th>
                             <th style="width: 130px;">ราคา/หน่วย (฿)</th>
-                            <th style="width: 100px;">ส่วนลด (%)</th>
                             <th style="width: 140px;">รวมเงิน (฿)</th>
                             <th style="min-width: 150px;">หมายเหตุ</th>
                             <th style="width: 60px;">ลบ</th>
@@ -152,7 +151,7 @@ const itemsData = @json($items);
 const existingLines = @json($order->lines);
 let rowIndex = 0;
 
-function addRowWithData(item_id = '', unit = '-', qty = '1.000', price = '0.00', disc = '0.00', remark = '') {
+function addRowWithData(item_id = '', unit = '-', qty = '1', price = '0.00', remark = '') {
     const tr = document.createElement('tr');
     tr.id = `line-row-${rowIndex}`;
     tr.innerHTML = `
@@ -165,13 +164,10 @@ function addRowWithData(item_id = '', unit = '-', qty = '1.000', price = '0.00',
         </td>
         <td class="text-center"><span class="item-unit small text-muted">${unit}</span></td>
         <td>
-            <input type="number" step="0.001" min="0.001" name="items[${rowIndex}][quantity]" class="form-control form-control-sm text-end line-qty" value="${qty}" required oninput="calculateRow(${rowIndex})">
+            <input type="number" step="${Number.isInteger(Number(qty)) ? 1 : 'any'}" min="${Number.isInteger(Number(qty)) ? 1 : 0.001}" name="items[${rowIndex}][quantity]" class="form-control form-control-sm text-end line-qty" value="${qty}" required oninput="calculateRow(${rowIndex})">
         </td>
         <td>
-            <input type="number" step="0.01" min="0" name="items[${rowIndex}][unit_price]" class="form-control form-control-sm text-end line-price" value="${price}" required oninput="calculateRow(${rowIndex})">
-        </td>
-        <td>
-            <input type="number" step="0.01" min="0" max="100" name="items[${rowIndex}][discount_percent]" class="form-control form-control-sm text-end line-disc" value="${disc}" oninput="calculateRow(${rowIndex})">
+            <input type="number" step="0.01" min="0" name="items[${rowIndex}][unit_price]" class="form-control form-control-sm text-end line-price" value="${price}" title="แก้ไขราคาได้หลังเลือกสินค้า" inputmode="decimal" required oninput="calculateRow(${rowIndex})">
         </td>
         <td class="text-end fw-bold line-total-disp">฿0.00</td>
         <td>
@@ -213,11 +209,9 @@ function calculateRow(rIdx) {
 
     const qty = parseFloat(tr.querySelector('.line-qty').value) || 0;
     const price = parseFloat(tr.querySelector('.line-price').value) || 0;
-    const discPct = parseFloat(tr.querySelector('.line-disc').value) || 0;
 
     const gross = qty * price;
-    const discAmt = gross * (discPct / 100);
-    const lineTotal = Math.max(0, gross - discAmt);
+    const lineTotal = gross;
 
     tr.querySelector('.line-total-disp').textContent = '฿' + lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     calculateOrderSummary();
@@ -228,11 +222,9 @@ function calculateOrderSummary() {
     document.querySelectorAll('#linesContainer tr').forEach(tr => {
         const qty = parseFloat(tr.querySelector('.line-qty').value) || 0;
         const price = parseFloat(tr.querySelector('.line-price').value) || 0;
-        const discPct = parseFloat(tr.querySelector('.line-disc').value) || 0;
 
         const gross = qty * price;
-        const discAmt = gross * (discPct / 100);
-        subtotal += Math.max(0, gross - discAmt);
+        subtotal += gross;
     });
 
     const orderDiscPct = parseFloat(document.getElementById('discountPercent').value) || 0;
@@ -275,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (existingLines && existingLines.length > 0) {
         existingLines.forEach(l => {
             const itemObj = itemsData.find(it => it.item_id === l.item_id);
-            addRowWithData(l.item_id, itemObj ? itemObj.unit : '-', l.quantity, l.unit_price, l.discount_percent, l.remark || '');
+            addRowWithData(l.item_id, itemObj ? itemObj.unit : '-', l.quantity, l.unit_price, l.remark || '');
         });
     } else {
         addRowWithData();

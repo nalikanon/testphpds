@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class SalesOrder extends Model
 {
     protected $table = 'Sales_Orders';
+
     protected $primaryKey = 'order_id';
+
     public $incrementing = true;
+
     protected $keyType = 'int';
 
     protected $fillable = [
@@ -50,6 +54,20 @@ class SalesOrder extends Model
         return $this->belongsTo(User::class, 'created_by', 'user_id');
     }
 
+    public function isOwnedBy(User $user): bool
+    {
+        return (string) $this->created_by === (string) $user->user_id;
+    }
+
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        if (! $user->isAdmin()) {
+            $query->where('created_by', $user->user_id);
+        }
+
+        return $query;
+    }
+
     public function lines()
     {
         return $this->hasMany(SalesLine::class, 'order_id', 'order_id')->orderBy('line_no');
@@ -79,4 +97,3 @@ class SalesOrder extends Model
         };
     }
 }
-
