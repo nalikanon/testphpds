@@ -18,11 +18,11 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">รหัสสินค้า (Item Code) <span class="text-danger">*</span></label>
-                            <input type="text" name="item_code" class="form-control @error('item_code') is-invalid @enderror" value="{{ old('item_code', $suggestedCode) }}" required>
+                            <input type="text" name="item_code" class="form-control @error('item_code') is-invalid @enderror" value="{{ old('item_code') }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">หมวดหมู่สินค้า (Category)</label>
-                            <input type="text" name="category" list="categoryList" class="form-control" value="{{ old('category', 'IT & Hardware') }}" placeholder="เช่น อิเล็กทรอนิกส์, อุปกรณ์สำนักงาน">
+                            <input type="text" name="category" list="categoryList" class="form-control" value="{{ old('category') }}" placeholder="ระบุหมวดหมู่">
                             <datalist id="categoryList">
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat }}"></option>
@@ -39,7 +39,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">หน่วยนับ (Unit)</label>
-                            <input type="text" name="unit" class="form-control" value="{{ old('unit', 'pc') }}" placeholder="เช่น pc, kg, box, ชิ้น, ตัว">
+                            <input type="text" name="unit" class="form-control" value="{{ old('unit') }}" placeholder="ระบุหน่วยนับ">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">ราคาต่อหน่วย (Unit Price) <span class="text-danger">*</span></label>

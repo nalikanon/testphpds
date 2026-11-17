@@ -17,13 +17,12 @@
                     @csrf
                     <div class="mb-3">
                         <label class="form-label fw-semibold">รหัสลูกค้า (Customer Code) <span class="text-danger">*</span></label>
-                        <input type="text" name="customer_code" class="form-control @error('customer_code') is-invalid @enderror" value="{{ old('customer_code', $suggestedCode) }}" required>
-                        <div class="form-text">เช่น CUST-001, CUST-002</div>
+                        <input type="text" name="customer_code" class="form-control @error('customer_code') is-invalid @enderror" value="{{ old('customer_code') }}" required>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">ชื่อลูกค้า / บริษัท (Customer Name) <span class="text-danger">*</span></label>
-                        <input type="text" name="customer_name" class="form-control @error('customer_name') is-invalid @enderror" value="{{ old('customer_name') }}" placeholder="เช่น บริษัท ตัวอย่าง จำกัด" required>
+                        <input type="text" name="customer_name" class="form-control @error('customer_name') is-invalid @enderror" value="{{ old('customer_name') }}" placeholder="ระบุชื่อลูกค้า" required>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-4">

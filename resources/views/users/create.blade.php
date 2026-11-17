@@ -17,7 +17,7 @@
                     @csrf
                     <div class="mb-3">
                         <label class="form-label fw-semibold">ชื่อผู้ใช้งาน (Username) <span class="text-danger">*</span></label>
-                        <input type="text" name="username" class="form-control @error('username') is-invalid @enderror" value="{{ old('username') }}" placeholder="เช่น john, somchai" required>
+                        <input type="text" name="username" class="form-control @error('username') is-invalid @enderror" value="{{ old('username') }}" placeholder="ระบุชื่อผู้ใช้งาน" required>
                     </div>
 
                     <div class="mb-3">

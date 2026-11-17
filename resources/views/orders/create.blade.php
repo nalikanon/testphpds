@@ -53,7 +53,7 @@
 
                 <div class="col-12">
                     <label class="form-label fw-semibold">หมายเหตุ (Remark)</label>
-                    <input type="text" name="remark" class="form-control" value="{{ old('remark') }}" placeholder="เช่น สถานที่ส่ง เงื่อนไขพิเศษ ฯลฯ">
+                    <input type="text" name="remark" class="form-control" value="{{ old('remark') }}" placeholder="ระบุหมายเหตุ">
                 </div>
             </div>
         </div>

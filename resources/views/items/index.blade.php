@@ -78,7 +78,7 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge bg-light text-dark border">{{ $item->category ?? 'General' }}</span>
+                            <span class="badge bg-light text-dark border">{{ $item->category ?? '-' }}</span>
                         </td>
                         <td class="text-center"><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $item->unit ?? '-' }}</span></td>
                         <td class="text-end fw-bold">฿{{ number_format($item->unit_price, 2) }}</td>

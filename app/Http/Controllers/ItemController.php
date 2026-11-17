@@ -43,13 +43,9 @@ class ItemController extends Controller
             abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถเพิ่มสินค้าได้ (Item Master: Admin Only)');
         }
 
-        $lastItem = Item::orderBy('item_id', 'desc')->first();
-        $nextNum = $lastItem ? ($lastItem->item_id + 1) : 1;
-        $suggestedCode = 'PROD-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
-
         $categories = Item::select('category')->whereNotNull('category')->distinct()->pluck('category');
 
-        return view('items.create', compact('suggestedCode', 'categories'));
+        return view('items.create', compact('categories'));
     }
 
     public function store(Request $request)

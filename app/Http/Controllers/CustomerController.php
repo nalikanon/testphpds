@@ -35,11 +35,7 @@ class CustomerController extends Controller
             abort(403, 'เฉพาะ Admin เท่านั้นที่สามารถเพิ่มข้อมูลลูกค้าได้ (User: Read Only)');
         }
 
-        $lastCust = Customer::orderBy('customer_id', 'desc')->first();
-        $nextNum = $lastCust ? ($lastCust->customer_id + 1) : 1;
-        $suggestedCode = 'CUST-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
-
-        return view('customers.create', compact('suggestedCode'));
+        return view('customers.create');
     }
 
     public function store(Request $request)

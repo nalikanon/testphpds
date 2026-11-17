@@ -90,18 +90,6 @@
             </form>
         </div>
 
-        <!-- Quick Demo Credentials helper buttons -->
-        <div class="mt-3 p-2 bg-white rounded border text-center small text-muted">
-            <div class="fw-semibold mb-1"><i class="bi bi-shield-check me-1"></i>คลิกเพื่อใส่ข้อมูลทดสอบ (Demo Users):</div>
-            <div class="d-flex justify-content-center gap-2">
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="fillForm('admin', 'admin123')">
-                    <strong>Admin</strong> (admin / admin123)
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-primary" onclick="fillForm('user', 'user123')">
-                    <strong>User</strong> (user / user123)
-                </button>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -115,11 +103,6 @@
             </div>
             <div class="modal-body small">
                 <p>หากคุณลืมรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบ (System Administrator) เพื่อขอรีเซ็ตรหัสผ่านใหม่</p>
-                <div class="alert alert-light border mb-0">
-                    <strong>ข้อมูลผู้ดูแลระบบเริ่มต้น:</strong><br>
-                    Username: <code>admin</code><br>
-                    Password: <code>admin123</code>
-                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
@@ -128,11 +111,5 @@
     </div>
 </div>
 
-<script>
-function fillForm(u, p) {
-    document.getElementById('username').value = u;
-    document.getElementById('password').value = p;
-}
-</script>
 @endsection
 
